@@ -1,32 +1,39 @@
-
 from flask import Flask, render_template, request, jsonify
-import random
+import re
 
 app = Flask(__name__)
 
-responses = {
-    "hello": ["Hi there!", "Hello!", "Hey! How can I help you?"],
-    "how are you": ["I'm doing great!", "All good!", "Feeling smart today!"],
-    "bye": ["Goodbye!", "See you soon!", "Take care!"],
-    "default": ["Sorry, I didn't understand that.", "Can you rephrase?", "Interesting! Tell me more."]
-}
+def chatbot_response(user_input):
+    text = user_input.lower()
 
-def chatbot_reply(user_input):
-    user_input = user_input.lower()
-    for key in responses:
-        if key in user_input:
-            return random.choice(responses[key])
-    return random.choice(responses["default"])
+    patterns = {
+        r"\b(hi|hello|hey)\b": "Hello! 👋 I’m your AI chatbot. How can I help?",
+        r"how are you": "I’m doing great! Thanks for asking 😊",
+        r"what.*name": "I’m an NLP-based Chatbot 🤖",
+        r"what.*do": "I can chat with you, answer questions, and demonstrate NLP concepts.",
+        r"help": "Sure! Try asking about NLP, AI, or general questions.",
+        r"\bbye|exit|quit\b": "Goodbye! 👋 Have a great day!",
+    }
+
+    for pattern, response in patterns.items():
+        if re.search(pattern, text):
+            return response
+
+    return (
+        "That’s interesting! 🤔 "
+        "I’m still learning. Could you rephrase or ask something else?"
+    )
 
 @app.route("/")
-def index():
+def home():
     return render_template("index.html")
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_message = request.json.get("message")
-    reply = chatbot_reply(user_message)
+    user_message = request.json.get("message", "")
+    reply = chatbot_response(user_message)
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
